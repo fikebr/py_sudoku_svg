@@ -2,21 +2,30 @@ import drawsvg as draw
 from sudoku import Sudoku
 import argparse
 import os
+import random
+
 
 def main():
+
     args = getArgs()
-    print('folder = {0}, file = {1}, cwd = {2}'.format(args.folder, args.file, os.path.split(__file__)[0]))
+    # print('folder = {0}, file = {1}, cwd = {2}'.format(args.folder, args.file, os.path.split(__file__)[0]))
 
-    canvasSize = args.size
-    cubeSize = canvasSize/9
+    drawPuzzles(args)
 
-    puzzle = getPuzzle(args.difficulty)
 
-    d = draw.Drawing(canvasSize, canvasSize, origin=(0,0))
-    drawPuzzle(d, puzzle, cubeSize)
-    draw3x3(d, cubeSize)
+def drawPuzzles(args):
 
-    d.save_svg('grid_num.svg')
+    for n in range(args.count):
+        count = str(n+1).zfill(3)
+
+        puzzle = getPuzzle(args.difficulty)
+        d = draw.Drawing(args.size, args.size, origin=(0,0))
+        drawPuzzle(d, puzzle, args.size/9)
+        draw3x3(d, args.size/9)
+
+        file = '{0}/{1}_{2}'.format(args.folder, count, args.file)
+        d.save_svg(file)
+
 
 def drawPuzzle(d, puzzle, cubeSize):
     for col in range(0, 9, 1):
@@ -37,7 +46,8 @@ def getCoords(row, col, cubeSize):
     return([x1, y1])
 
 def getPuzzle(difficulty=0.5):
-    puzzle = Sudoku(3).difficulty(difficulty)
+    seed = random.randint(1, 999999)
+    puzzle = Sudoku(3, seed=seed).difficulty(difficulty)
     # puzzle.show()
     return(puzzle.board)
 
@@ -59,7 +69,7 @@ def getArgs():
                     epilog='Thank you.')
 
     parser.add_argument('-o', '--output', type=str, help='Output filename. The name will be given a prefix of "001_"', required=True)
-    parser.add_argument('-n', '--number', type=int, help='The Number of files to create.', default=1)
+    parser.add_argument('-n', '--count', type=int, help='The Number of files to create.', default=1)
     parser.add_argument('-z', '--size', type=int, help='The size in pixels of the puzzle.', default=200)
     parser.add_argument('-d', '--difficulty', type=int, help='The diffuculty of the puzzle. 1=easy, 2=med, 3=hard.', default=2, choices=[1, 2, 3])
     parser.add_argument('-t', '--template', type=str, help='The png file to use as a template to place your puzzle in.')
@@ -77,7 +87,10 @@ def getArgs():
 def getOutput(output):
     (folder, file) = os.path.split(os.path.abspath(output))
     # print('folder = {0}, file = {1}, cwd = {2}'.format(folder, file, os.path.split(__file__)[0]))
-    os.makedirs(folder)
+
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
     return(folder, file)
 
 if __name__ == "__main__":
